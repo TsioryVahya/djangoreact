@@ -17,5 +17,13 @@ class Probleme(models.Model):
     def __str__(self):
         return self.titre
 
+    @classmethod
+    def get_all_problems(cls):
+        return cls.objects.select_related('id_utilisateur').all().order_by('-date_creation')
+
+    @classmethod
+    def get_problem_with_user(cls, problem_id):
+        return cls.objects.select_related('id_utilisateur').get(id=problem_id)
+
     class Meta:
         db_table = 'problemes'

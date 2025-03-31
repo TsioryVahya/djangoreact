@@ -26,6 +26,7 @@ CREATE TABLE problemes (
     date_mise_a_jour TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
 -- Table des réponses aux problèmes
 CREATE TABLE reponses (
     id SERIAL PRIMARY KEY,
