@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'styles/home.css' %}">
+
+{% endblock %}
+
+{% block content %}
+<div class="app-wrapper">
+    {% include 'layout/sidebar.html' %}
+    <main class="main-content">
+        <div class="main-element">
+            <header class="header">
+                <div class="feed-selector">
+                    Pour vous
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+            </header>
+
+            <div class="create-post-bar">
+                <div class="create-post">
+                    <div class="left-section">
+                        <img src="{% static 'images/mess.jpg' %}" alt="Profile" class="profile-pic">
+                        <input type="text" placeholder="Quoi de neuf ?" class="post-input">
+                    </div>
+                    <div class="right-section">
+                        <button class="post-media-btn">
+                            <i class="far fa-image"></i>
+                        </button>
+                        <button class="publish-btn" disabled>
+                            Publier
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feed-container" id="posts-container">
+                <!-- Les publications seront ajoutées dynamiquement ici par JavaScript -->
+            </div>
+
+            <div id="loadingSpinner" class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </main>
+    <script src="{% static 'scripts/home.js' %}"></script>
+</div>
+{% endblock %}

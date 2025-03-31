@@ -13,16 +13,16 @@ def login_view(request):
         if user is not None:
             login(request, user)
             messages.success(request, 'Connexion réussie!')
-            return redirect('dashboard')  # Changé de 'accueil' à 'dashboard'
+            # Utilisez return redirect('/') au lieu de redirect('home') pour éviter l'erreur
+            return redirect('accueil')
         else:
             messages.error(request, 'Identifiants invalides.')
     return render(request, 'utilisateurs/login.html')
 
 @login_required
-def dashboard_view(request):
-    return render(request, 'utilisateurs/dashboard.html', {
-        'user': request.user
-    })
+def after_login(request):
+    # Redirige vers home.html après la connexion
+    return render(request, 'utilisateurs/home.html')
 
 def signup_view(request):
     if request.method == 'POST':

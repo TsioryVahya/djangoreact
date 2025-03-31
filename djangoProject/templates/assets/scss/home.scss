@@ -1,0 +1,806 @@
+// Variables
+$primary-color: #000;
+$secondary-color: #666;
+$background-color: #f0f2f5; // Changé pour ressembler à Facebook
+$border-color: #dddfe2;
+$accent-color: #1877f2; // Bleu Facebook
+$sidebar-color: teal;
+$card-bg: #fff;
+$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+$sidebar-width: 70px;
+$right-sidebar-width: 320px;
+$border-radius: 8px;
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+
+// Import sidebar styles
+@import 'sidebar';
+
+// Mixins
+@mixin flex($direction: row, $justify: flex-start, $align: flex-start) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+}
+
+@mixin button-reset {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  outline: none;
+}
+
+@mixin hover-effect {
+  transition: all 0.2s ease;
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+@mixin card {
+  background-color: $card-bg;
+  border-radius: $border-radius;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+// Logo Text Style for header
+@mixin logo-style-header {
+  font-size: 32px;
+  font-weight: 700;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(45deg, #000 30%, #555 70%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+// Global Styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: $font-family;
+  background-color: $background-color;
+  color: $primary-color;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+// Layout
+.app-wrapper {
+  @include flex(row, center, stretch);
+  min-height: 100vh;
+  position: relative;
+  padding-left: $sidebar-width;
+  padding-right: $right-sidebar-width;
+}
+
+// Main Content
+.main-content {
+  flex: 0 1 780px; // Ne pas s'étirer, pouvoir rétrécir, taille de base 680px
+  max-width: 780px;
+  padding: 0 $spacing-md;
+  margin-left:10rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  .main-element {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+}
+
+// Header
+.header {
+  @include flex(row, center, center);
+  padding: $spacing-md 0;
+  position: sticky;
+  top: 0;
+  background-color: rgba($background-color, 0.98);
+  z-index: 100;
+  width: 100%;
+  border-bottom: 1px solid $border-color;
+  
+  .logo {
+    .logo-text {
+      @include logo-style-header;
+    }
+  }
+  
+  .feed-selector {
+    @include flex(row, center, center);
+    gap: $spacing-xs;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    
+    i {
+      font-size: 0.9rem;
+      margin-left: 4px;
+    }
+  }
+}
+
+// Stats Dashboard
+.stats-dashboard {
+  @include card;
+  margin-bottom: $spacing-lg;
+  width: 100%;
+  
+  h2 {
+    margin-bottom: $spacing-md;
+    font-size: 1.5rem;
+    color: $primary-color;
+    text-align: center;
+  }
+  
+  .stats-cards {
+    @include flex(row, space-between, stretch);
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+  }
+  
+  .stats-card {
+    @include flex(column, space-between, flex-start);
+    background-color: $card-bg;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    padding: $spacing-md;
+    flex: 1;
+    position: relative;
+    
+    .stats-icon {
+      @include flex(row, center, center);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: rgba($accent-color, 0.1);
+      color: $accent-color;
+      font-size: 1.2rem;
+      margin-bottom: $spacing-sm;
+    }
+    
+    .stats-info {
+      @include flex(column, flex-start, flex-start);
+      gap: $spacing-xs;
+      
+      .stats-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: $primary-color;
+      }
+      
+      .stats-label {
+        font-size: 0.9rem;
+        color: $secondary-color;
+      }
+    }
+    
+    .stats-trend {
+      position: absolute;
+      top: $spacing-md;
+      right: $spacing-md;
+      @include flex(row, center, center);
+      gap: 2px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 12px;
+      
+      &.up {
+        background-color: rgba(22, 163, 74, 0.1);
+        color: #16a34a;
+      }
+      
+      &.down {
+        background-color: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+      }
+    }
+  }
+  
+  .engagement-chart {
+    h3 {
+      margin-bottom: $spacing-md;
+      font-size: 1.1rem;
+      color: $primary-color;
+    }
+    
+    canvas {
+      width: 100%;
+      height: 200px;
+    }
+  }
+}
+
+// Content Filter
+.content-filter {
+  @include flex(row, flex-start, center);
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  padding: $spacing-sm 0;
+  overflow-x: auto;
+  
+  .filter-btn {
+    @include button-reset;
+    padding: $spacing-sm $spacing-md;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background-color: rgba($secondary-color, 0.1);
+    color: $secondary-color;
+    white-space: nowrap;
+    
+    &:hover, &.active {
+      background-color: rgba($accent-color, 0.1);
+      color: $accent-color;
+    }
+    
+    &.active {
+      font-weight: 600;
+    }
+  }
+}
+
+// Post Composer
+.post-composer {
+  @include card;
+  @include flex(row, flex-start, flex-start);
+  gap: $spacing-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+  
+  .composer-avatar {
+    img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+  }
+  
+  .composer-input {
+    flex: 1;
+    
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      border: none;
+      resize: none;
+      padding: $spacing-sm 0;
+      font-size: 1rem;
+      font-family: inherit;
+      background: transparent;
+      
+      &:focus {
+        outline: none;
+      }
+    }
+    
+    .composer-actions {
+      @include flex(column, flex-start, stretch);
+      margin-top: $spacing-sm;
+      
+      .composer-buttons {
+        @include flex(row, space-between, center);
+        padding: $spacing-sm 0;
+        margin-bottom: $spacing-sm;
+        border-top: 1px solid $border-color;
+        
+        .attach-btn {
+          @include button-reset;
+          @include flex(row, center, center);
+          flex: 1;
+          gap: $spacing-xs;
+          padding: $spacing-sm;
+          color: $secondary-color;
+          font-size: 0.9rem;
+          border-radius: $border-radius;
+          
+          i {
+            font-size: 1.2rem;
+          }
+          
+          &:hover {
+            background-color: rgba($secondary-color, 0.1);
+          }
+        }
+      }
+      
+      .publish-btn {
+        @include button-reset;
+        background-color: $accent-color;
+        color: white;
+        padding: $spacing-sm $spacing-md;
+        border-radius: $border-radius;
+        font-weight: 600;
+        width: 100%;
+        text-align: center;
+        @include hover-effect;
+      }
+    }
+  }
+}
+
+// Posts
+.posts-container {
+  padding-bottom: $spacing-lg;
+}
+
+.post {
+  @include card;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  @include flex(column, flex-start, stretch);
+  gap: $spacing-sm;
+  
+  .post-header {
+    @include flex(row, space-between, center);
+    
+    .user-info {
+      @include flex(row, flex-start, center);
+      gap: $spacing-sm;
+      
+      .user-avatar {
+        img {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+      }
+      
+      .user-name {
+        font-weight: 600;
+        @include flex(row, flex-start, center);
+        gap: 4px;
+        
+        .verified-badge {
+          color: $accent-color;
+          font-size: 0.8rem;
+        }
+      }
+    }
+    
+    .post-time {
+      color: $secondary-color;
+      font-size: 0.9rem;
+    }
+  }
+  
+  .post-content {
+    padding: $spacing-sm 0;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  
+  .post-actions {
+    @include flex(row, flex-start, center);
+    gap: $spacing-lg;
+    padding-top: $spacing-sm;
+    border-top: 1px solid $border-color;
+    
+    .action-btn {
+      @include button-reset;
+      @include flex(row, center, center);
+      gap: $spacing-xs;
+      color: $secondary-color;
+      font-size: 0.9rem;
+      flex: 1;
+      padding: $spacing-sm 0;
+      
+      i {
+        font-size: 1.2rem;
+      }
+      
+      &:hover {
+        color: $accent-color;
+      }
+    }
+  }
+}
+
+// Right Sidebar
+.right-sidebar {
+  width: $right-sidebar-width;
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  padding: $spacing-lg $spacing-md;
+  overflow-y: auto;
+  background-color: $background-color;
+  border-left: 1px solid $border-color;
+  
+  h3 {
+    color: $secondary-color;
+    font-size: 1rem;
+    margin-bottom: $spacing-md;
+    font-weight: 600;
+  }
+  
+  .sponsored-section, .birthday-section, .contacts-section {
+    margin-bottom: $spacing-lg;
+  }
+  
+  .sponsored-item {
+    @include flex(row, flex-start, center);
+    gap: $spacing-md;
+    padding: $spacing-sm 0;
+    
+    img {
+      border-radius: $border-radius;
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+    }
+    
+    strong {
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 3px;
+    }
+    
+    p {
+      font-size: 0.8rem;
+      color: $secondary-color;
+    }
+  }
+  
+  .birthday-item {
+    @include flex(row, flex-start, center);
+    gap: $spacing-sm;
+    font-size: 0.9rem;
+    
+    i {
+      color: $accent-color;
+      font-size: 1.2rem;
+    }
+  }
+  
+  .contacts-header {
+    @include flex(row, space-between, center);
+    margin-bottom: $spacing-sm;
+    
+    .contacts-actions {
+      @include flex(row, flex-start, center);
+      gap: $spacing-md;
+      color: $secondary-color;
+      font-size: 0.9rem;
+      
+      i {
+        cursor: pointer;
+        
+        &:hover {
+          color: $accent-color;
+        }
+      }
+    }
+  }
+  
+  .contact-item {
+    @include flex(row, flex-start, center);
+    gap: $spacing-sm;
+    padding: $spacing-sm 0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    position: relative;
+    
+    img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    
+    &:hover {
+      background-color: rgba($secondary-color, 0.05);
+    }
+    
+    &.online {
+      &::after {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background-color: #31a24c;
+        border-radius: 50%;
+        bottom: $spacing-sm;
+        left: 28px;
+        border: 2px solid $background-color;
+      }
+    }
+  }
+}
+
+// Create Button
+.create-btn {
+  position: fixed;
+  bottom: $spacing-lg;
+  right: $spacing-lg + $right-sidebar-width;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: $accent-color;
+  color: white;
+  font-size: 1.5rem;
+  @include flex(row, center, center);
+  @include button-reset;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  @include hover-effect;
+}
+
+// Loading Spinner
+.loading-spinner {
+  @include flex(row, center, center);
+  padding: $spacing-lg 0;
+  display: none;
+  
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid $border-color;
+    border-radius: 50%;
+    border-top-color: $accent-color;
+    animation: spin 1s ease-in-out infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+}
+
+// Media Queries
+@media (max-width: 1200px) {
+  .right-sidebar {
+    display: none;
+  }
+  
+  .app-wrapper {
+    padding-right: 0;
+  }
+  
+  .main-content {
+    margin-right: 0;
+    margin-left: $sidebar-width;
+  }
+  
+  .create-btn {
+    right: $spacing-lg;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-wrapper {
+    padding-left: 0;
+    padding-bottom: 70px;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    padding-bottom: 70px;
+    
+    .main-element {
+      max-width: 100%;
+    }
+  }
+  
+  .create-btn {
+    bottom: 80px;
+  }
+  
+  .stats-cards {
+    flex-direction: column;
+  }
+}
+
+// Feed Container
+.feed-container {
+  width: 100%;
+  max-width: 780px; // Augmenté pour correspondre à la largeur de l'input
+  margin: 0 auto;
+  padding: 16px;
+  
+  .post {
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+    padding: 16px;
+    
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        
+        .profile-pic {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+        
+        .post-meta {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          
+          .username {
+            font-weight: 600;
+            color: #1c1c1c;
+          }
+          
+          .timestamp {
+            color: #666;
+            font-size: 0.9em;
+          }
+        }
+      }
+    }
+    
+    .post-content {
+      margin-bottom: 16px;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: #1c1c1c;
+    }
+    
+    .post-actions {
+      display: flex;
+      gap: 24px;
+      
+      .action-btn {
+        background: none;
+        border: none;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #666;
+        cursor: pointer;
+        transition: color 0.2s ease;
+        
+        &:hover {
+          color: #1c1c1c;
+        }
+        
+        i {
+          font-size: 1.2rem;
+        }
+        
+        span {
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}
+
+// Infinite scroll loading spinner
+.loading-spinner {
+  display: none;
+  justify-content: center;
+  padding: 20px 0;
+  
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #eee;
+    border-radius: 50%;
+    border-top-color: #1877f2;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// New Create Post Bar
+.create-post-bar {
+  position: sticky;
+  top: 60px;
+  z-index: 99;
+  background-color: $background-color;
+  padding: $spacing-md;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: $spacing-lg;
+  
+  .create-post {
+    @include flex(row, space-between, center);
+    background-color: white;
+    padding: $spacing-md;
+    border-radius: $border-radius;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    
+    .left-section {
+      @include flex(row, flex-start, center);
+      gap: $spacing-md;
+      flex: 1;
+      
+      .profile-pic {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      
+      .post-input {
+        border: none;
+        background: none;
+        font-size: 1rem;
+        padding: $spacing-sm;
+        flex: 1;
+        
+        &::placeholder {
+          color: $secondary-color;
+        }
+        
+        &:focus {
+          outline: none;
+        }
+      }
+    }
+    
+    .right-section {
+      @include flex(row, flex-end, center);
+      gap: $spacing-sm;
+      
+      .post-media-btn {
+        @include button-reset;
+        @include flex(row, center, center);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        color: $accent-color;
+        
+        &:hover {
+          background-color: rgba($accent-color, 0.1);
+        }
+      }
+      
+      .publish-btn {
+        @include button-reset;
+        background-color: $accent-color;
+        color: white;
+        padding: $spacing-sm $spacing-md;
+        border-radius: 20px;
+        font-weight: 600;
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}
