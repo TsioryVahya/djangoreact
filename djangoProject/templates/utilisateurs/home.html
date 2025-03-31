@@ -1,4 +1,10 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'styles/home.css' %}">
+
+{% endblock %}
 
 {% block content %}
 <div class="app-wrapper">
@@ -38,5 +44,6 @@
             </div>
         </div>
     </main>
+    <script src="{% static 'scripts/home.js' %}"></script>
 </div>
 {% endblock %}
