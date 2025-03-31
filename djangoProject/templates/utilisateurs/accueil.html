@@ -1,0 +1,13 @@
+{% extends "utilisateurs/base.html" %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">Bienvenue, {{ user.username }}!</h1>
+    <p class="lead">Vous 
+    êtes connecté avec succès à votre compte.</p>
+        <hr class="my-4">
+        <p>Explorez les fonctionnalités de notre site en utilisant le menu ci-dessus.</p>
+    </div>
+    {% endblock %}

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
+from django.contrib.auth.hashers import make_password
 
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
@@ -8,6 +9,8 @@ class UserManager(BaseUserManager):
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
         user = self.model(username=username, email=email, **extra_fields)
+        
+        # Utiliser set_password au lieu d'accéder directement à password_hash
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -21,7 +24,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=100, unique=True)
-    password = models.CharField(max_length=255, db_column='password_hash')
+    # Ne pas utiliser db_column='password_hash' car cela crée une confusion
+    # Django utilise le champ password pour stocker le hash
+    password = models.CharField(max_length=255)
     created_at = models.DateTimeField(default=timezone.now)
     
     is_active = models.BooleanField(default=True)
@@ -56,3 +61,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def __str__(self):
         return self.username
+        
+    def save(self, *args, **kwargs):
+        # Assurons-nous que le mot de passe est haché lors de la sauvegarde
+        if self._state.adding and self.password and not self.password.startswith(('pbkdf2_sha256$', 'bcrypt$')):
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
