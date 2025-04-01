@@ -1,4 +1,6 @@
-from django.db.models import Q
+from django.db.models import Q, Max, Subquery, OuterRef, Value, TextField
+from django.db.models.functions import Coalesce  # Ajout de cet import
+
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
@@ -56,10 +58,21 @@ def signup_view(request):
 
 @login_required
 def user_list_view(request):
-    users = Utilisateur.objects.exclude(id=request.user.id)
-    return render(request, 'utilisateurs/user_list.html', {
-        'users': users
-    })
+    users = Utilisateur.objects.exclude(id=request.user.id).annotate(
+        last_message=Coalesce(
+            Subquery(
+                Mess.objects.filter(
+                    id_conversation__in=Conversation.objects.filter(
+                        Q(id_participant1=OuterRef('id'), id_participant2=request.user.id) |
+                        Q(id_participant1=request.user.id, id_participant2=OuterRef('id'))
+                    )
+                ).order_by('-horodatage').values('contenu')[:1]
+            ),
+            Value(''),
+            output_field=TextField()
+        )
+    )
+    return render(request, 'utilisateurs/user_list.html', {'users': users})
 
 
 @login_required
