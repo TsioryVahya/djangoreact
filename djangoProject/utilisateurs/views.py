@@ -13,6 +13,7 @@ def login_view(request):
         if user is not None:
             login(request, user)
             messages.success(request, 'Connexion réussie!')
+            request.session['user_id'] = user.id
             # Utilisez return redirect('/') au lieu de redirect('home') pour éviter l'erreur
             return redirect('accueil')
         else:

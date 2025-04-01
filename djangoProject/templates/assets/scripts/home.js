@@ -13,29 +13,38 @@ class Post {
     }
 }
 
-// Post Manager sara
+// Post Manager
 class PostsManager {
     constructor() {
         this.posts = [];
         this.container = document.getElementById('posts-container');
         this.loading = false;
         this.page = 1;
+        this.hasMore = true;
     }
 
     async loadPosts() {
-        if (this.loading) return;
+        if (this.loading || !this.hasMore) return;
         this.loading = true;
         document.getElementById('loadingSpinner').style.display = 'block';
 
         try {
-            // Simuler un appel API
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await fetch(`/api/problemes/?page=${this.page}`);
+            if (!response.ok) {
+                throw new Error('Erreur réseau');
+            }
+            const data = await response.json();
             
-            // Ajouter des posts de démonstration
-            const newPosts = this.generateDummyPosts();
+            if (data.results.length === 0) {
+                this.hasMore = false;
+                return;
+            }
+            
+            const newPosts = this.transformApiDataToPosts(data.results);
             this.posts = [...this.posts, ...newPosts];
             this.renderPosts(newPosts);
             
+            this.hasMore = data.has_next;
             this.page++;
         } catch (error) {
             console.error('Erreur lors du chargement des posts:', error);
@@ -45,59 +54,29 @@ class PostsManager {
         }
     }
 
-    generateDummyPosts() {
-        const dummyContent = [
-            {
-                username: 'mess.jpg',
-                content: 'Amazing sunset in Bali! 🌅 #travelphotography',
-                likes: 445,
-                comments: 23,
-                reposts:12,
-                shares:11,
-                isVerified: true
-            },
-            {
-                username: 'tech_mike',
-                content: 'Just deployed my first React Native app! 🚀 #coding #developer',
-                likes: 232,
-                comments: 45,
-                reposts:12,
-                shares:11,
-                isVerified: false
-            },
-            {
-                username: 'mess.jpg',
-                content: 'Amazing sunset in Bali! 🌅 #travelphotography',
-                likes: 445,
-                comments: 23,
-                reposts:12,
-                shares:11,
-                isVerified: true
-            },
-            {
-                username: 'tech_mike',
-                content: 'Just deployed my first React Native app! 🚀 #coding #developer',
-                likes: 232,
-                comments: 45,
-                reposts:12,
-                shares:11,
-                isVerified: false
-            },
-
-            // Add more dummy content as needed
-        ];
-
-        return dummyContent.map(post => new Post(
-            post.username,
-            `mess.jpg`,
-            post.content,
-            post.likes,
-            post.comments,
-            Math.floor(Math.random() * 50),
-            Math.floor(Math.random() * 20),
-            `${Math.floor(Math.random() * 23)}h`,
-            post.isVerified
-        ));
+    transformApiDataToPosts(apiData) {
+        return apiData.map(probleme => {
+            // Utilisez le nom d'utilisateur ou "Anonyme" si le post est anonyme
+            const username = probleme.est_anonyme ? 'Anonyme' : (probleme.id_utilisateur?.nom_utilisateur || 'Utilisateur inconnu');
+            
+            // Formatage de la date (simplifié - vous pourriez utiliser une lib comme moment.js)
+            const postDate = new Date(probleme.date_creation);
+            const now = new Date();
+            const diffHours = Math.floor((now - postDate) / (1000 * 60 * 60));
+            const timeText = diffHours < 24 ? `${diffHours}h` : postDate.toLocaleDateString();
+            
+            return new Post(
+                username,
+                probleme.id_utilisateur?.profil?.url_avatar || '/static/images/default-avatar.png',
+                probleme.contenu,
+                Math.floor(Math.random() * 100), // likes aléatoires (à adapter si votre API les fournit)
+                Math.floor(Math.random() * 30),   // comments aléatoires
+                Math.floor(Math.random() * 20),   // reposts aléatoires
+                Math.floor(Math.random() * 10),   // shares aléatoires
+                timeText,
+                false // isVerified - à adapter selon vos besoins
+            );
+        });
     }
 
     renderPosts(postsToRender) {
@@ -115,7 +94,7 @@ class PostsManager {
             <div class="post-header">
                 <div class="user-info">
                     <div class="user-avatar">
-                        <img src="${post.avatar}" alt="${post.username}" />
+                        <img src="${post.avatar}" alt="${post.username}" onerror="this.src='/static/images/default-avatar.png'" />
                     </div>
                     <div class="user-name">
                         ${post.username}
@@ -133,7 +112,7 @@ class PostsManager {
                 <button class="action-btn"><i class="far fa-comment"></i> <span>${post.comments}</span></button>
                 <button class="action-btn"><i class="fas fa-retweet"></i> <span>${post.reposts}</span></button>
                 <button class="action-btn"><i class="far fa-share-square"></i> <span>${post.shares}</span></button>
-
+            </div>
         `;
         return postEl;
     }
@@ -151,40 +130,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle post input
+    // Handle post input (si vous voulez garder cette fonctionnalité)
     const postInput = document.querySelector('.post-input');
     const publishBtn = document.querySelector('.publish-btn');
 
-    postInput.addEventListener('input', (e) => {
-        publishBtn.disabled = e.target.value.trim().length === 0;
-    });
+    if (postInput && publishBtn) {
+        postInput.addEventListener('input', (e) => {
+            publishBtn.disabled = e.target.value.trim().length === 0;
+        });
 
-    publishBtn.addEventListener('click', () => {
-        if (postInput.value.trim()) {
-            const newPost = {
-                username: 'current_user',
-                content: postInput.value,
-                likes: 0,
-                comments: 0,
-                isVerified: true
-            };
-            
-            // Add new post to beginning of feed
-            const postElement = postsManager.createPostElement(new Post(
-                newPost.username,
-                '/images/avatar1.jpg',
-                newPost.content,
-                newPost.likes,
-                newPost.comments,
-                0,
-                0,
-                'À l\'instant',
-                newPost.isVerified
-            ));
-            
-            postsManager.container.insertBefore(postElement, postsManager.container.firstChild);
-            postInput.value = '';
-            publishBtn.disabled = true;
-        }
-    });
+        publishBtn.addEventListener('click', () => {
+            if (postInput.value.trim()) {
+                // Ici, vous devriez faire un appel API pour créer un nouveau problème
+                // Ceci est juste un exemple simplifié
+                const newPost = {
+                    username: 'current_user',
+                    content: postInput.value,
+                    likes: 0,
+                    comments: 0,
+                    isVerified: true
+                };
+                
+                const postElement = postsManager.createPostElement(new Post(
+                    newPost.username,
+                    '/static/images/default-avatar.png',
+                    newPost.content,
+                    newPost.likes,
+                    newPost.comments,
+                    0,
+                    0,
+                    'À l\'instant',
+                    newPost.isVerified
+                ));
+                
+                postsManager.container.insertBefore(postElement, postsManager.container.firstChild);
+                postInput.value = '';
+                publishBtn.disabled = true;
+            }
+        });
+    }
 });
