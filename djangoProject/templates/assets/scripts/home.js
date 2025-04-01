@@ -1,6 +1,6 @@
 // Post Data Structure
 class Post {
-    constructor(username, avatar, content, likes, comments, reposts, shares, time, isVerified = false) {
+    constructor(username, avatar, content, likes, comments, reposts, shares, time, isVerified = false, auteur_id = null, is_liked = false, id = null) {
         this.username = username;
         this.avatar = avatar;
         this.content = content;
@@ -10,6 +10,9 @@ class Post {
         this.shares = shares;
         this.time = time;
         this.isVerified = isVerified;
+        this.auteur_id = auteur_id;
+        this.is_liked = is_liked;
+        this.id = id;
     }
 }
 
@@ -56,10 +59,7 @@ class PostsManager {
 
     transformApiDataToPosts(apiData) {
         return apiData.map(probleme => {
-            // Utilisez le nom d'utilisateur ou "Anonyme" si le post est anonyme
             const username = probleme.est_anonyme ? 'Anonyme' : (probleme.id_utilisateur?.nom_utilisateur || 'Utilisateur inconnu');
-            
-            // Formatage de la date (simplifié - vous pourriez utiliser une lib comme moment.js)
             const postDate = new Date(probleme.date_creation);
             const now = new Date();
             const diffHours = Math.floor((now - postDate) / (1000 * 60 * 60));
@@ -69,12 +69,15 @@ class PostsManager {
                 username,
                 probleme.id_utilisateur?.profil?.url_avatar || '/static/images/default-avatar.png',
                 probleme.contenu,
-                probleme.likes || 0, // Nombre de likes provenant de l'API
-                Math.floor(Math.random() * 30),   // comments aléatoires
-                Math.floor(Math.random() * 20),   // reposts aléatoires
-                Math.floor(Math.random() * 10),   // shares aléatoires
+                probleme.likes_count || 0,  // Utiliser le nombre réel de likes
+                probleme.comments || 0,      // À implémenter plus tard
+                0,                          // reposts - à implémenter plus tard
+                0,                          // shares - à implémenter plus tard
                 timeText,
-                false // isVerified - à adapter selon vos besoins
+                false,
+                probleme.id_utilisateur?.id,
+                probleme.has_liked,
+                probleme.id
             );
         });
     }
@@ -137,20 +140,72 @@ class PostsManager {
                 </div>
                 <div class="post-time">${post.time}</div>
             </div>
-            <div class="post-content">${post.content}</div>
+            <div class="post-content">
+                <p class="post-text">${post.content}</p>
+            </div>
             <div class="post-actions">
-                <button class="action-btn like-btn">
-                    <i class="fa-regular fa-heart"></i>
-                    <span>${post.likes}</span>
+                <button class="action-btn like-btn ${post.is_liked ? 'liked' : ''}" data-post-id="${post.id}">
+                    <i class="fa-${post.is_liked ? 'solid' : 'regular'} fa-heart"></i>
+                    <span class="like-count">${post.likes}</span>
                 </button>
-                <button class="action-btn"><i class="far fa-comment"></i> <span>${post.comments}</span></button>
-                <button class="action-btn"><i class="fas fa-retweet"></i> <span>${post.reposts}</span></button>
-                <button class="action-btn"><i class="far fa-share-square"></i> <span>${post.shares}</span></button>
+                <button class="action-btn">
+                    <i class="far fa-comment"></i>
+                    <span>${post.comments}</span>
+                </button>
+                <button class="action-btn send-msg-btn" data-userid="${post.auteur_id}" data-username="${post.username}" data-anonymous="${post.is_anonymous}">
+                    <i class="far fa-envelope"></i>
+                    <span>Message</span>
+                </button>
             </div>
         `;
 
+        // Ajouter l'écouteur d'événements pour le bouton de message
+        const messageBtn = postEl.querySelector('.send-msg-btn');
+        messageBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const userId = this.dataset.userid;
+            const username = this.dataset.username;
+            const isAnonymous = this.dataset.anonymous === 'true';
+            openChatDialog(userId, isAnonymous ? 'Anonyme' : username);
+        });
+
         const likeBtn = postEl.querySelector('.like-btn');
-        likeBtn.addEventListener('click', () => this.toggleLike(post.id, likeBtn));
+        likeBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const postId = likeBtn.dataset.postId;
+            console.log('Toggling like for post:', postId);  // Debug log
+            
+            try {
+                const response = await fetch('/utilisateurs/toggle-like/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    },
+                    body: JSON.stringify({ post_id: parseInt(postId) })  // Changé de probleme_id à post_id
+                });
+
+                const data = await response.json();
+                console.log('Like response:', data);  // Debug log
+                
+                if (data.success) {
+                    const likeCount = likeBtn.querySelector('.like-count');
+                    const icon = likeBtn.querySelector('i');
+                    
+                    if (data.is_liked) {
+                        likeBtn.classList.add('liked');
+                        icon.className = 'fa-solid fa-heart';
+                    } else {
+                        likeBtn.classList.remove('liked');
+                        icon.className = 'fa-regular fa-heart';
+                    }
+                    likeCount.textContent = data.likes_count;
+                }
+            } catch (error) {
+                console.error('Error toggling like:', error);
+            }
+        });
 
         return postEl;
     }
@@ -307,3 +362,38 @@ document.addEventListener('DOMContentLoaded', () => {
         return cookieValue;
     }
 });
+
+function openChatDialog(userId, username) {
+    const chatDialog = document.getElementById('chat-dialog');
+    if (!chatDialog) {
+        console.error('Chat dialog not found');
+        return;
+    }
+
+    const messageInput = document.getElementById('message-input');
+    const messagesContainer = chatDialog.querySelector('.chat-messages');
+    const headerInitial = chatDialog.querySelector('.header-initial');
+    const chatTitle = chatDialog.querySelector('.chat-title');
+    
+    // Réinitialiser l'état
+    messageInput.value = '';
+    messagesContainer.innerHTML = '';
+    currentConversationId = null;
+    
+    // Configurer l'apparence
+    if (username === 'Anonyme') {
+        headerInitial.textContent = 'A';
+        headerInitial.style.backgroundColor = '#6c757d';
+        chatTitle.textContent = 'Anonyme';
+    } else {
+        headerInitial.textContent = username.charAt(0).toUpperCase();
+        headerInitial.style.backgroundColor = username.charAt(0).toUpperCase() === 'T' ? '#0084ff' : '#65676b';
+        chatTitle.textContent = username;
+    }
+
+    // Afficher la boîte de dialogue
+    chatDialog.style.display = 'block';
+    
+    // Charger la conversation
+    loadConversation(userId);
+}

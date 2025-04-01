@@ -1,18 +1,18 @@
-from django.db.models import Q, Max, Subquery, OuterRef, Value, TextField
-from django.db.models.functions import Coalesce  # Ajout de cet import
-
+import json
+from django.db.models import Q, Max, Subquery, OuterRef, Value, TextField, Count, Exists
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-
+from django.core.paginator import Paginator
+from django.db.models import Count, Exists, OuterRef
 from conversations.models import Conversation
 from mess.models import Mess
 from .models import Utilisateur
-from django.contrib.auth.forms import UserCreationForm
-from profils.models import Profil
-from datetime import datetime
+from problemes.models import Probleme
+from reactionproblemes.models import ReactionProbleme
 
 def login_view(request):
     if request.method == 'POST':
@@ -134,10 +134,11 @@ def user_list_view(request):
     )
     
     return render(request, 'utilisateurs/user_list.html', {'users': users})
-
 @login_required
 def get_conversation(request, user_id):
+    print(f"Getting conversation with user_id: {user_id}")
     other_user = get_object_or_404(Utilisateur, id=user_id)
+    print(f"Other user found: {other_user.nom_utilisateur}")
 
     conversation = Conversation.objects.filter(
         (Q(id_participant1=request.user) & Q(id_participant2=other_user)) |
@@ -145,26 +146,28 @@ def get_conversation(request, user_id):
     ).first()
 
     if not conversation:
+        print("Creating new conversation")
         conversation = Conversation.objects.create(
             id_participant1=request.user,
             id_participant2=other_user
         )
+    else:
+        print(f"Found existing conversation: {conversation.id}")
 
     messages = Mess.objects.filter(id_conversation=conversation).order_by('horodatage')
+    print(f"Found {messages.count()} messages")
 
-    return JsonResponse({
+    response_data = {
         'messages': [{
             'contenu': msg.contenu,
             'expediteur': msg.id_expediteur.nom_utilisateur,
             'horodatage': msg.horodatage.strftime("%Y-%m-%d %H:%M:%S"),
-            'is_mine': msg.id_expediteur == request.user,
-            'avatar_url': msg.id_expediteur.profil.url_avatar if hasattr(msg.id_expediteur,
-                                                                         'profil') and msg.id_expediteur.profil.url_avatar else None
+            'is_mine': msg.id_expediteur == request.user
         } for msg in messages],
-        'conversation_id': conversation.id,
-        'other_user_avatar': other_user.profil.url_avatar if hasattr(other_user,
-                                                                     'profil') and other_user.profil.url_avatar else None
-    })
+        'conversation_id': conversation.id
+    }
+    print("Returning response:", response_data)
+    return JsonResponse(response_data)
 
 @login_required
 def send_message(request):
@@ -265,5 +268,108 @@ def get_all_last_messages(request):
         sorted_messages[0]['is_most_recent'] = True
     
     return JsonResponse({'last_messages': sorted_messages})
+
+@login_required
+def get_posts(request):
+    page = request.GET.get('page', 1)
+    
+    posts = (Probleme.objects
+        .select_related('auteur')
+        .prefetch_related('reactions')
+        .annotate(
+            comments=Count('reponses', distinct=True),
+            has_liked=Exists(
+                ReactionProbleme.objects.filter(
+                    id_probleme=OuterRef('pk'),
+                    id_utilisateur=request.user
+                )
+            ),
+            likes_count=Count('reactions', distinct=True)
+        )
+        .order_by('-date_creation')
+    )
+    
+    paginator = Paginator(posts, 10)
+    
+    try:
+        posts_page = paginator.page(page)
+    except:
+        return JsonResponse({'posts': []})
+    
+    posts_data = [{
+        'id': post.id,
+        'content': post.contenu,
+        'title': post.titre,
+        'username': 'Anonyme' if post.est_anonyme else post.auteur.nom_utilisateur,
+        'user_id': None if post.est_anonyme else post.auteur.id,
+        'created_at': post.date_creation.isoformat(),
+        'likes_count': post.likes_count,  # Nombre réel de likes de la base de données
+        'comments': post.comments,        # Nombre de commentaires
+        'is_anonymous': post.est_anonyme,
+        'has_liked': post.has_liked      # Si l'utilisateur actuel a liké
+    } for post in posts_page]
+    
+    return JsonResponse({
+        'posts': posts_data,
+        'has_next': posts_page.has_next()
+    })
+
+@login_required
+def toggle_like(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            post_id = data.get('post_id')  # Changé de probleme_id à post_id
+            
+            print(f"Toggling like for post: {post_id}")  # Debug log
+            
+            if post_id is None:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Post ID is required'
+                }, status=400)
+
+            probleme = get_object_or_404(Probleme, id=post_id)
+            
+            # Check if user has already liked this post
+            reaction = ReactionProbleme.objects.filter(
+                id_probleme=probleme,
+                id_utilisateur=request.user
+            ).first()
+            
+            if reaction:
+                # Unlike
+                print(f"Removing like for post {post_id}")  # Debug log
+                reaction.delete()
+                is_liked = False
+            else:
+                # Like
+                print(f"Adding like for post {post_id}")  # Debug log
+                ReactionProbleme.objects.create(
+                    id_probleme=probleme,
+                    id_utilisateur=request.user
+                )
+                is_liked = True
+
+            likes_count = probleme.reactions.count()
+            print(f"New likes count: {likes_count}")  # Debug log
+            
+            return JsonResponse({
+                'success': True,
+                'is_liked': is_liked,
+                'likes_count': likes_count
+            })
+            
+        except Exception as e:
+            print(f"Error in toggle_like: {str(e)}")  # Debug log
+            return JsonResponse({
+                'success': False, 
+                'error': str(e)
+            }, status=400)
+    
+    return JsonResponse({
+        'success': False, 
+        'error': 'Invalid request method'
+    }, status=405)
 
 

@@ -1,0 +1,446 @@
+/* Déplacez tout le contenu du fichier CSS existant ici */
+
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+    background-color: #fff;
+}
+
+.main-content {
+    flex-grow: 1;
+    margin-left: 80px;
+    border-left: 1px solid #e4e6eb;
+    border-right: 1px solid #e4e6eb;
+    padding: 20px;
+    min-height: 100vh;
+    background-color: white;
+}
+
+.main-element {
+    max-width: 600px;
+    margin: 0 auto;
+    border-right: 1px solid #e4e6eb;
+    min-height: 100vh;
+}
+
+.header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e4e6eb;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 100;
+}
+
+.feed-selector {
+    font-size: 20px;
+    font-weight: 700;
+    color: #050505;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.user-list {
+    padding: 8px 0;
+}
+
+.user-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.user-card:hover {
+    background-color: #f0f2f5;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-initial {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 18px;
+    text-transform: uppercase;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.username {
+    font-size: 15px;
+    font-weight: 600;
+    color: #050505;
+}
+
+.last-message {
+    font-size: 13px;
+    color: #65676b;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: normal;
+}
+
+.last-message.unread {
+    color: #050505;
+    font-weight: 600;
+}
+
+.btn-message {
+    background: transparent;
+    border: none;
+    color: #0084ff;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-message:hover {
+    background-color: #f0f2f5;
+}
+
+.btn-message i {
+    font-size: 18px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.message-preview {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #65676b;
+    font-size: 13px;
+}
+
+.message-sender {
+    color: #65676b;
+    font-weight: normal;
+}
+
+.post-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border: none;
+    background: none;
+    color: #65676b;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background-color: #f0f2f5;
+    color: #1877f2;
+}
+
+.action-btn i {
+    font-size: 18px;
+}
+
+.message-btn {
+    color: #0084ff;
+}
+
+.message-btn:hover {
+    background-color: #e7f3ff;
+}
+
+.like-btn.liked {
+    color: #e41e3f;
+}
+
+.message-btn:hover {
+    color: #0084ff;
+}
+
+.action-btn i {
+    font-size: 18px;
+}
+
+.message-btn i {
+    font-size: 18px;
+}
+
+.post-footer {
+    border-top: 1px solid #e4e6eb;
+    padding: 8px 16px;
+}
+
+.send-message-btn {
+    background-color: #0084ff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.send-message-btn:hover {
+    background-color: #0066cc;
+}
+
+.send-message-btn i {
+    font-size: 16px;
+}
+
+.post-action-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.left-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.send-message-btn {
+    background-color: #e7f3ff;
+    color: #0084ff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.send-message-btn:hover {
+    background-color: #dbe7f2;
+}
+
+.message-icon-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border: none;
+    background: none;
+    color: #0084ff;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.message-icon-btn:hover {
+    background-color: #e7f3ff;
+}
+
+.message-icon-btn i {
+    font-size: 18px;
+}
+
+.message-icon-btn {
+    color: #0084ff;
+}
+
+.message-icon-btn:hover {
+    background-color: #e7f3ff;
+}
+
+.send-msg-btn {
+    color: #0084ff !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.send-msg-btn:hover {
+    background-color: #e7f3ff;
+}
+
+.send-msg-btn i {
+    font-size: 16px;
+}
+
+#messenger-container {
+    position: fixed;
+    bottom: 0;
+    right: 20px;
+    display: flex;
+    gap: 16px;
+    z-index: 1000;
+}
+
+.messenger-box {
+    width: 328px;
+    height: 455px;
+    background: white;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.messenger-box.minimized {
+    height: 48px;
+}
+
+.messenger-header {
+    padding: 8px 12px;
+    background: #f5f5f5;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.messenger-user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.messenger-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #0084ff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.messenger-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.messenger-actions button {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: #65676b;
+}
+
+.messenger-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.messenger-messages {
+    flex-grow: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.messenger-message {
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 18px;
+    margin-bottom: 8px;
+}
+
+.messenger-message.mine {
+    background: #0084ff;
+    color: white;
+    margin-left: auto;
+}
+
+.messenger-message.theirs {
+    background: #f0f2f5;
+    color: black;
+}
+
+.messenger-input {
+    padding: 12px;
+    border-top: 1px solid #e4e6eb;
+    display: flex;
+    gap: 8px;
+}
+
+.messenger-input input {
+    flex-grow: 1;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    background: #f0f2f5;
+}
+
+.messenger-input .send-btn {
+    background: none;
+    border: none;
+    color: #0084ff;
+    cursor: pointer;
+}
+
+.minimized .messenger-body {
+    display: none;
+}
+
+.like-btn {
+    transition: all 0.2s ease;
+}
+
+.like-btn.liked {
+    color: #e41e3f !important;
+}
+
+.like-btn.liked i {
+    color: #e41e3f;
+}
+
+.like-btn:hover {
+    transform: scale(1.1);
+}
+
+.like-btn.liked:hover {
+    background-color: #ffebee !important;
+}

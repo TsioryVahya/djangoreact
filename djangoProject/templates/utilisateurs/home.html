@@ -3,6 +3,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'styles/home.css' %}">
+<link rel="stylesheet" href="{% static 'styles/user_list.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -72,7 +73,322 @@
             </div>
         </div>
     </div>
-    
-    <script src="{% static 'scripts/home.js' %}"></script>
 </div>
+<div id="chat-dialog" class="chat-dialog">
+    <div class="chat-header">
+        <div class="chat-header-info">
+            <div class="user-initial header-initial">#</div>
+            <div class="header-text">
+                <span class="chat-title"></span>
+                <span class="online-status">En ligne</span>
+            </div>
+        </div>
+        <div class="chat-header-actions">
+            <button class="btn-icon minimize-chat">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button class="close-chat">✕</button>
+        </div>
+    </div>
+    <div class="chat-messages"></div>
+    <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+            <input type="text" placeholder="Aa" id="message-input">
+            <button class="btn-emoji">
+                <i class="fas fa-smile"></i>
+            </button>
+            <div class="emoji-picker"></div>
+        </div>
+        <button class="btn-send" id="send-message">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+{% csrf_token %}
+<div id="messenger-container"></div>
+
+<template id="chat-box-template">
+  <div class="messenger-box">
+    <div class="messenger-header">
+      <div class="messenger-user-info">
+        <div class="messenger-avatar"></div>
+        <div class="messenger-name"></div>
+      </div>
+      <div class="messenger-actions">
+        <button class="minimize-btn"><i class="fas fa-minus"></i></button>
+        <button class="close-btn"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div class="messenger-body">
+      <div class="messenger-messages"></div>
+      <div class="messenger-input">
+        <input type="text" placeholder="Écrire un message...">
+        <button class="send-btn"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script src="{% static 'scripts/home.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    window.CURRENT_USER = 'CopGit918';
+    window.CURRENT_DATETIME = '2025-04-01 06:54:05';
+    window.currentConversationId = null;
+    window.lastMessageTime = null;
+    window.messagePollingInterval = null;
+    const displayedMessages = new Set();
+
+    // Éléments DOM
+    const chatDialog = document.getElementById('chat-dialog');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-message');
+    const messagesContainer = document.querySelector('.chat-messages');
+    const closeButton = document.querySelector('.close-chat');
+    const minimizeButton = document.querySelector('.minimize-chat');
+    const postsContainer = document.getElementById('posts-container');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const emojiButton = document.querySelector('.btn-emoji');
+    const emojiPicker = document.querySelector('.emoji-picker');
+
+    let isMinimized = false;
+    let page = 1;
+    let loading = false;
+
+    // Initialisation des emojis
+    const emojis = [
+        '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊',
+        '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘',
+        '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪',
+        '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒',
+        '❤️', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤',
+        '👍', '👎', '👏', '🙌', '🤝', '🤗', '🤔', '🤭'
+    ];
+
+    // Initialisation du sélecteur d'emoji
+    function initEmojiPicker() {
+        emojis.forEach(emoji => {
+            const span = document.createElement('span');
+            span.className = 'emoji-item';
+            span.textContent = emoji;
+            span.addEventListener('click', () => {
+                messageInput.value += emoji;
+                messageInput.focus();
+                toggleEmojiPicker();
+                sendButton.style.opacity = '1';
+            });
+            emojiPicker.appendChild(span);
+        });
+    }
+
+    // Fonction pour basculer l'affichage du sélecteur d'emoji
+    function toggleEmojiPicker() {
+        emojiPicker.classList.toggle('active');
+    }
+
+    // Gestionnaire d'événements pour les emojis
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.btn-emoji') && !e.target.closest('.emoji-picker')) {
+            emojiPicker.classList.remove('active');
+        }
+    });
+
+    emojiButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleEmojiPicker();
+    });
+
+    // Fonctions de chat
+    window.openChatDialog = function(userId, username) {
+        const headerInitial = chatDialog.querySelector('.header-initial');
+        const chatTitle = chatDialog.querySelector('.chat-title');
+        
+        messageInput.value = '';
+        messagesContainer.innerHTML = '';
+        window.currentConversationId = null;
+        window.lastMessageTime = null;
+        
+        if (username === 'Anonyme') {
+            headerInitial.textContent = 'A';
+            headerInitial.style.backgroundColor = '#6c757d';
+            chatTitle.textContent = 'Anonyme';
+        } else {
+            headerInitial.textContent = username.charAt(0).toUpperCase();
+            headerInitial.style.backgroundColor = username.charAt(0).toUpperCase() === 'T' ? '#0084ff' : '#65676b';
+            chatTitle.textContent = username;
+        }
+
+        chatDialog.style.display = 'block';
+        isMinimized = false;
+        chatDialog.classList.remove('minimized');
+        loadConversation(userId);
+    };
+
+    window.loadConversation = function(userId) {
+        fetch(`/utilisateurs/conversations/${userId}/`)
+            .then(response => response.json())
+            .then(data => {
+                window.currentConversationId = data.conversation_id;
+                messagesContainer.innerHTML = '';
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(message => displayMessage(message));
+                    window.lastMessageTime = data.messages[data.messages.length - 1].horodatage;
+                }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                if (window.messagePollingInterval) {
+                    clearInterval(window.messagePollingInterval);
+                }
+                window.messagePollingInterval = setInterval(checkNewMessages, 3000);
+            })
+            .catch(error => console.error('Error:', error));
+    };
+
+    function displayMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', message.is_mine ? 'sent' : 'received');
+        
+        if (!message.is_mine) {
+            const initialDiv = document.createElement('div');
+            initialDiv.classList.add('user-initial', 'message-initial');
+            initialDiv.textContent = message.expediteur.charAt(0);
+            initialDiv.style.backgroundColor = getInitialColor(message.expediteur);
+            messageDiv.appendChild(initialDiv);
+        }
+
+        const bubbleDiv = document.createElement('div');
+        bubbleDiv.classList.add('message-bubble');
+        bubbleDiv.innerHTML = `<div class="message-content">${message.contenu}</div>`;
+        messageDiv.appendChild(bubbleDiv);
+
+        const timeDiv = document.createElement('div');
+        timeDiv.classList.add('message-time');
+        timeDiv.textContent = formatTime(message.horodatage);
+        messageDiv.appendChild(timeDiv);
+
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function checkNewMessages() {
+        if (!window.currentConversationId || !window.lastMessageTime) return;
+
+        fetch(`/utilisateurs/conversations/${window.currentConversationId}/new-messages/${encodeURIComponent(window.lastMessageTime)}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(message => displayMessage(message));
+                    window.lastMessageTime = data.messages[data.messages.length - 1].horodatage;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function sendMessage() {
+    const content = messageInput.value.trim();
+    if (!content || !window.currentConversationId) {
+        console.log('No content or conversation ID');
+        return;
+    }
+
+    console.log('Sending message:', {
+        content: content,
+        conversationId: window.currentConversationId
+    });
+
+    const formData = new FormData();
+    formData.append('conversation_id', window.currentConversationId);
+    formData.append('message', content);
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch('/utilisateurs/send-message/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        console.log('Send message response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Send message response:', data);
+        if (data.status === 'success') {
+            displayMessage(data.message);
+            messageInput.value = '';
+            sendButton.style.opacity = '0.7';
+        }
+    })
+    .catch(error => {
+        console.error('Error sending message:', error);
+        alert('Erreur lors de l\'envoi du message');
+    });
+}
+
+    // Gestionnaires d'événements pour le chat
+    closeButton.addEventListener('click', () => {
+        chatDialog.style.display = 'none';
+        window.currentConversationId = null;
+        window.lastMessageTime = null;
+        if (window.messagePollingInterval) {
+            clearInterval(window.messagePollingInterval);
+            window.messagePollingInterval = null;
+        }
+    });
+
+    minimizeButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isMinimized = !isMinimized;
+        chatDialog.classList.toggle('minimized', isMinimized);
+    });
+
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    messageInput.addEventListener('input', function() {
+        sendButton.style.opacity = this.value.trim() ? '1' : '0.7';
+    });
+
+    // Fonctions utilitaires
+    function getInitialColor(username) {
+        return username.charAt(0).toUpperCase() === 'T' ? '#0084ff' : '#65676b';
+    }
+
+    function formatTime(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+        
+        if (diffInHours < 24) {
+            return `${diffInHours}h`;
+        }
+        return date.toLocaleDateString();
+    }
+
+    // Initialisation
+    initEmojiPicker();
+
+    // Gestionnaire de clic pour les boutons de message dans les publications
+    document.addEventListener('click', function(e) {
+        const messageBtn = e.target.closest('.send-msg-btn');
+        if (messageBtn) {
+            e.stopPropagation();
+            const userId = messageBtn.dataset.userid;
+            const username = messageBtn.dataset.username;
+            const isAnonymous = messageBtn.dataset.anonymous === 'true';
+            openChatDialog(userId, isAnonymous ? 'Anonyme' : username);
+        }
+    });
+});
+</script>
 {% endblock %}

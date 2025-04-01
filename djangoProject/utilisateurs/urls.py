@@ -16,4 +16,6 @@ urlpatterns = [
          name='get_new_messages'),
     path('toggle-reaction/', toggle_reaction, name='toggle_reaction'),
     path('get_all_last_messages/', views.get_all_last_messages, name='get_all_last_messages'),
+    path('api/posts/', views.get_posts, name='get_posts'),
+    path('toggle-like/', views.toggle_like, name='toggle_like'),
 ]
