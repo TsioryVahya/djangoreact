@@ -19,7 +19,7 @@ def probleme_list_create(request):
             contenu = data.get('contenu')
             est_anonyme = data.get('est_anonyme', False)
 
-            if not titre or not contenu:
+            if not titre or not contenu:  # Correction ici
                 return JsonResponse({
                     'error': 'Le titre et le contenu sont requis'
                 }, status=400)
@@ -71,7 +71,8 @@ def probleme_list_create(request):
                     'profil': {
                         'url_avatar': probleme.id_utilisateur.profil.url_avatar if hasattr(probleme.id_utilisateur, 'profil') else None
                     }
-                } if probleme.id_utilisateur else None
+                } if probleme.id_utilisateur else None,
+                'likes': probleme.reactions.count()  # Nombre de réactions
             }
             results.append(result)
         

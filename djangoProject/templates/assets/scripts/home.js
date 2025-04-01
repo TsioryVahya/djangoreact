@@ -69,7 +69,7 @@ class PostsManager {
                 username,
                 probleme.id_utilisateur?.profil?.url_avatar || '/static/images/default-avatar.png',
                 probleme.contenu,
-                Math.floor(Math.random() * 100), // likes aléatoires (à adapter si votre API les fournit)
+                probleme.likes || 0, // Nombre de likes provenant de l'API
                 Math.floor(Math.random() * 30),   // comments aléatoires
                 Math.floor(Math.random() * 20),   // reposts aléatoires
                 Math.floor(Math.random() * 10),   // shares aléatoires
@@ -84,6 +84,37 @@ class PostsManager {
             const postElement = this.createPostElement(post);
             this.container.appendChild(postElement);
         });
+    }
+
+    async toggleLike(problemeId, likeBtn) {
+        try {
+            const response = await fetch('/toggle-reaction/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({ probleme_id: problemeId })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const likeCountSpan = likeBtn.querySelector('span');
+                let currentLikes = parseInt(likeCountSpan.textContent, 10);
+
+                if (data.liked) {
+                    likeCountSpan.textContent = currentLikes + 1;
+                    likeBtn.classList.add('liked');
+                } else {
+                    likeCountSpan.textContent = currentLikes - 1;
+                    likeBtn.classList.remove('liked');
+                }
+            } else {
+                console.error('Erreur lors de la mise à jour de la réaction');
+            }
+        } catch (error) {
+            console.error('Erreur réseau:', error);
+        }
     }
 
     createPostElement(post) {
@@ -117,6 +148,10 @@ class PostsManager {
                 <button class="action-btn"><i class="far fa-share-square"></i> <span>${post.shares}</span></button>
             </div>
         `;
+
+        const likeBtn = postEl.querySelector('.like-btn');
+        likeBtn.addEventListener('click', () => this.toggleLike(post.id, likeBtn));
+
         return postEl;
     }
 }
