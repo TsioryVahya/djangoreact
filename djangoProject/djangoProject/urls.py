@@ -26,5 +26,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', redirect_to_login, name='root'),  # Redirige la racine vers login
     path('utilisateurs/', include('utilisateurs.urls')),
+    path('problemes/', include('problemes.urls')),
     path('api/problemes/', get_problemes, name='api-problemes'),
 ]
