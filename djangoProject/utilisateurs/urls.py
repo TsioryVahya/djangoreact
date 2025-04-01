@@ -5,5 +5,6 @@ urlpatterns = [
     path('', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
     path('accueil/', views.after_login, name='accueil'),
+    path('profile/', views.profile_view, name='profile'),
     # Ne pas inclure de chemin vers 'home' ici pour éviter les conflits
 ]

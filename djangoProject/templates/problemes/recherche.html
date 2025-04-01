@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'styles/recherche.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="app-wrapper">
+    {% include 'layout/sidebar.html' %}
+    <main class="main-content">
+        <div class="main-element">
+            <header class="header">
+                <div class="feed-selector">
+                    Recherche
+                    <i class="fa-solid fa-search"></i>
+                </div>
+            </header>
+            
+            <div class="search-container">
+                <div class="search-form">
+                    <input type="text" id="search-input" placeholder="Rechercher..." class="search-input">
+                    <button id="search-button" class="search-button">
+                        <i class="fa-solid fa-search"></i>
+                    </button>
+                </div>
+                
+                <div class="search-results" id="search-results">
+                    <!-- Les résultats de recherche seront affichés ici -->
+                </div>
+                
+                <div id="searchLoadingSpinner" class="loading-spinner" style="display: none;">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="{% static 'scripts/recherche.js' %}"></script>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'styles/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="app-wrapper">
+    {% include 'layout/sidebar.html' %}
+    <main class="main-content">
+        <div class="profile-container">
+            <!-- En-tête du profil -->
+            <div class="profile-header">
+                <div class="profile-info">
+                    <h1>{{ user.nom_utilisateur }}</h1>
+                    <div class="username">@{{ user.nom_utilisateur }}</div>
+                </div>
+                <div class="profile-picture">
+                    {% if profile.url_avatar %}
+                    <img src="{{ profile.url_avatar }}" alt="Avatar de profil">
+                    {% else %}
+                    <img src="{% static 'images/mess.jpg' %}" alt="Avatar par défaut">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Bio du profil -->
+            <div class="profile-bio">
+                <p>Membre depuis {{ user.date_creation|date:"d F Y" }}</p>
+                <p>{{ profile.bio|default:"" }}</p>
+            </div>
+
+            <!-- Statistiques du profil -->
+            <div class="profile-stats">
+                <div class="stat">
+                    <span class="count">0</span>
+                    <span class="label">Publications</span>
+                </div>
+                <div class="stat">
+                    <span class="count">0</span>
+                    <span class="label">Abonnés</span>
+                </div>
+                <div class="stat">
+                    <span class="count">0</span>
+                    <span class="label">Abonnements</span>
+                </div>
+            </div>
+
+            <!-- Bouton d'édition du profil -->
+            <div class="profile-actions">
+                <button class="edit-profile-btn">Modifier le profil</button>
+            </div>
+            <!-- Liste des publications de l'utilisateur -->
+            <div class="user-posts">
+                <h2>Publications</h2>
+                {% if user_posts %}
+                    <ul class="posts-list">
+                        {% for post in user_posts %}
+                            <li class="post-item">
+                                <h3>{{ post.title }}</h3>
+                                <p>{{ post.content|truncatewords:20 }}</p>
+                                <a href="{% url 'post_detail' post.id %}" class="read-more">Lire la suite</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Aucune publication pour le moment.</p>
+                {% endif %}
+            </div>
+
+            <!-- Onglets -->
+            <div class="profile-tabs">
+                <button class="tab active
+                " data-tab="posts">Publications</button>
+                                <button class="tab" data-tab="about">À propos</button>
+                            </div>
+
+                            <!-- Contenu des onglets -->
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="posts">
+                                    <h2>Publications</h2>
+                                    {% if user_posts %}
+                                        <ul class="posts-list">
+                                            {% for post in user_posts %}
+                                                <li class="post-item">
+                                                    <h3>{{ post.title }}</h3>
+                                                    <p>{{ post.content|truncatewords:20 }}</p>
+                                                    <a href="{% url 'post_detail' post.id %}" class="read-more">Lire la suite</a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>Aucune publication pour le moment.</p>
+                                    {% endif %}
+                                </div>
+                                <div class="tab-pane" id="about">
+                                    <h2>À propos</h2>
+                                    <p>{{ profile.bio|default:"Aucune information disponible." }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+                {% endblock %}

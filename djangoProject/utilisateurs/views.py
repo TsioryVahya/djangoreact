@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Utilisateur
 from django.contrib.auth.forms import UserCreationForm
+from profils.models import Profil
 
 def login_view(request):
     if request.method == 'POST':
@@ -48,3 +49,18 @@ def signup_view(request):
             messages.error(request, str(e))
     
     return render(request, 'utilisateurs/signup.html')
+
+@login_required
+def profile_view(request):
+    # Récupérer l'utilisateur courant
+    user = request.user
+    
+    # Récupérer le profil associé à l'utilisateur ou en créer un s'il n'existe pas
+    profile, created = Profil.objects.get_or_create(id_utilisateur=user)
+    
+    context = {
+        'user': user,
+        'profile': profile,
+    }
+    
+    return render(request, 'utilisateurs/profile.html', context)

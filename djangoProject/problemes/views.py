@@ -46,4 +46,6 @@ def get_problemes(request):
         logger.error(f"Erreur lors de la récupération des problèmes: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
-# Create your views here.
+@login_required
+def recherche_view(request):
+    return render(request, 'problemes/recherche.html')
