@@ -1,5 +1,6 @@
 from django.db.models import Q, Max, Subquery, OuterRef, Value, TextField
 from django.db.models.functions import Coalesce  # Ajout de cet import
+from django.utils import timezone  # Ajout de cet import
 
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -121,15 +122,15 @@ def user_list_view(request):
                 user.last_message_date = last_message.horodatage
             else:
                 user.last_message = "Pas de message"
-                user.last_message_date = None
+                user.last_message_date = timezone.make_aware(datetime.min)
         else:
             user.last_message = "Pas de message"
-            user.last_message_date = None
+            user.last_message_date = timezone.make_aware(datetime.min)
     
     # Trier les utilisateurs : ceux avec des messages d'abord, triés par date
     users = sorted(
         users,
-        key=lambda x: (x.last_message_date or datetime.min),
+        key=lambda x: x.last_message_date or timezone.make_aware(datetime.min),
         reverse=True
     )
     
@@ -141,7 +142,7 @@ def get_conversation(request, user_id):
 
     conversation = Conversation.objects.filter(
         (Q(id_participant1=request.user) & Q(id_participant2=other_user)) |
-        (Q(id_participant1=other_user) & Q(id_participant2=request.user))
+        (Q(id_participant1=other_user) & Q(id_participant2=request.user))  # Fixed parenthesis
     ).first()
 
     if not conversation:
