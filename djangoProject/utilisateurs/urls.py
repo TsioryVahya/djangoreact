@@ -18,4 +18,6 @@ urlpatterns = [
     path('get_all_last_messages/', views.get_all_last_messages, name='get_all_last_messages'),
     path('logout/', views.logout_view, name='logout'),  # Ensure this is correctly defined
 
+    path('api/posts/', views.get_posts, name='get_posts'),
+    path('toggle-like/', views.toggle_like, name='toggle_like'),
 ]
