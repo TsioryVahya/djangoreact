@@ -90,11 +90,14 @@ class PostsManager {
         const postEl = document.createElement('div');
         postEl.className = 'post';
         
+        // Créer l'icône initiale au lieu d'utiliser une image
+        const userInitial = post.username.charAt(0).toUpperCase();
+        
         postEl.innerHTML = `
             <div class="post-header">
                 <div class="user-info">
-                    <div class="user-avatar">
-                        <img src="${post.avatar}" alt="${post.username}" onerror="this.src='/static/images/default-avatar.png'" />
+                    <div class="user-initial-icon">
+                        ${userInitial}
                     </div>
                     <div class="user-name">
                         ${post.username}
@@ -168,5 +171,104 @@ document.addEventListener('DOMContentLoaded', () => {
                 publishBtn.disabled = true;
             }
         });
+    }
+
+    // Modal handling
+    const modal = document.getElementById('publishModal');
+    const closeModalBtn = modal.querySelector('.close-modal');
+    const cancelBtn = modal.querySelector('.cancel-btn');
+    const submitBtn = modal.querySelector('.submit-btn');
+    const titleInput = document.getElementById('problemTitle');
+    const contentTextarea = document.getElementById('problemContent');
+    const anonymousCheck = document.getElementById('anonymousCheck');
+
+    function openModal() {
+        modal.classList.add('active');
+        titleInput.focus();
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        titleInput.value = '';
+        contentTextarea.value = '';
+        anonymousCheck.checked = false;
+        submitBtn.disabled = true;
+    }
+
+    function validateInputs() {
+        submitBtn.disabled = !(titleInput.value.trim() && contentTextarea.value.trim());
+    }
+
+    postInput.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    
+    [titleInput, contentTextarea].forEach(input => {
+        input.addEventListener('input', validateInputs);
+    });
+
+    submitBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/problemes/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    titre: titleInput.value.trim(),
+                    contenu: contentTextarea.value.trim(),
+                    est_anonyme: anonymousCheck.checked
+                })
+            });
+
+            if (response.ok) {
+                const newPost = await response.json();
+                
+                // Créer un nouveau post avec les données de la réponse
+                const postElement = postsManager.createPostElement(
+                    new Post(
+                        newPost.est_anonyme ? 'Anonyme' : newPost.id_utilisateur.nom_utilisateur,
+                        '/static/images/default-avatar.png',
+                        `${newPost.titre}\n\n${newPost.contenu}`,
+                        0,
+                        0,
+                        0,
+                        0,
+                        'À l\'instant',
+                        false
+                    )
+                );
+                
+                // Ajouter le post au début du feed
+                postsManager.container.insertBefore(postElement, postsManager.container.firstChild);
+                closeModal();
+                
+                // Optionnel : Afficher un message de succès
+                alert('Problème publié avec succès !');
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erreur lors de la publication');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la publication:', error);
+            alert('Erreur lors de la publication : ' + error.message);
+        }
+    });
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 });

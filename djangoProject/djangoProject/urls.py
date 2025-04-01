@@ -17,15 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
-from problemes.views import get_problemes
+from problemes.views import probleme_list_create  # Changed from get_problemes
 
 def redirect_to_login(request):
     return redirect('login')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/problemes/', probleme_list_create, name='probleme-list-create'),  # Updated
     path('', redirect_to_login, name='root'),  # Redirige la racine vers login
     path('utilisateurs/', include('utilisateurs.urls')),
     path('problemes/', include('problemes.urls')),
-    path('api/problemes/', get_problemes, name='api-problemes'),
 ]

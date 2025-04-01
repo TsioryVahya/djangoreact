@@ -21,8 +21,20 @@ def login_view(request):
         if user is not None:
             login(request, user)
             messages.success(request, 'Connexion réussie!')
+            
+            # Stocker les informations importantes de l'utilisateur dans la session
             request.session['user_id'] = user.id
-            # Utilisez return redirect('/') au lieu de redirect('home') pour éviter l'erreur
+            request.session['username'] = user.nom_utilisateur  # Stocker le nom d'utilisateur
+            request.session['email'] = user.email  # Stocker l'email si nécessaire
+            
+            # Si vous avez besoin de plus d'informations, vous pouvez les ajouter ici
+            # Par exemple, si l'utilisateur a un profil avec une image
+            if hasattr(user, 'profil') and user.profil:
+                request.session['avatar'] = user.profil.url_avatar
+            
+            # Forcer la sauvegarde de la session
+            request.session.save()
+            
             return redirect('accueil')
         else:
             messages.error(request, 'Identifiants invalides.')
@@ -30,8 +42,22 @@ def login_view(request):
 
 @login_required
 def after_login(request):
-    # Redirige vers home.html après la connexion
-    return render(request, 'utilisateurs/home.html')
+    # Vérifier que les données de session sont bien présentes
+    user_id = request.session.get('user_id')
+    username = request.session.get('username')
+    
+    # Loguer les informations pour le débogage
+    print(f"Session user_id: {user_id}")
+    print(f"Session username: {username}")
+    print(f"request.user: {request.user}")
+    
+    context = {
+        'session_user_id': user_id,
+        'session_username': username,
+    }
+    
+    # Redirige vers home.html après la connexion avec le contexte
+    return render(request, 'utilisateurs/home.html', context)
 
 def signup_view(request):
     if request.method == 'POST':
