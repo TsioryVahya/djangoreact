@@ -12,6 +12,7 @@ from mess.models import Mess
 from .models import Utilisateur
 from django.contrib.auth.forms import UserCreationForm
 from profils.models import Profil
+from datetime import datetime
 
 def login_view(request):
     if request.method == 'POST':
@@ -74,22 +75,39 @@ def profile_view(request):
 
 @login_required
 def user_list_view(request):
-    users = Utilisateur.objects.exclude(id=request.user.id).annotate(
-        last_message=Coalesce(
-            Subquery(
-                Mess.objects.filter(
-                    id_conversation__in=Conversation.objects.filter(
-                        Q(id_participant1=OuterRef('id'), id_participant2=request.user.id) |
-                        Q(id_participant1=request.user.id, id_participant2=OuterRef('id'))
-                    )
-                ).order_by('-horodatage').values('contenu')[:1]
-            ),
-            Value(''),
-            output_field=TextField()
-        )
+    users = Utilisateur.objects.exclude(id=request.user.id)
+    
+    for user in users:
+        # Trouver la conversation entre l'utilisateur courant et cet utilisateur
+        conversation = Conversation.objects.filter(
+            Q(id_participant1=user, id_participant2=request.user) |
+            Q(id_participant1=request.user, id_participant2=user)
+        ).first()
+        
+        if conversation:
+            # Récupérer le dernier message de cette conversation
+            last_message = Mess.objects.filter(
+                id_conversation=conversation
+            ).order_by('-horodatage').first()
+            
+            if last_message:
+                user.last_message = last_message.contenu
+                user.last_message_date = last_message.horodatage
+            else:
+                user.last_message = "Pas de message"
+                user.last_message_date = None
+        else:
+            user.last_message = "Pas de message"
+            user.last_message_date = None
+    
+    # Trier les utilisateurs : ceux avec des messages d'abord, triés par date
+    users = sorted(
+        users,
+        key=lambda x: (x.last_message_date or datetime.min),
+        reverse=True
     )
+    
     return render(request, 'utilisateurs/user_list.html', {'users': users})
-
 
 @login_required
 def get_conversation(request, user_id):
@@ -129,8 +147,8 @@ def send_message(request):
         message_content = request.POST.get('message')
 
         conversation = get_object_or_404(Conversation, id=conversation_id)
+        other_user = conversation.id_participant2 if conversation.id_participant1 == request.user else conversation.id_participant1
 
-        # Verify user is part of conversation
         if request.user not in [conversation.id_participant1, conversation.id_participant2]:
             return JsonResponse({'error': 'Unauthorized'}, status=403)
 
@@ -147,11 +165,10 @@ def send_message(request):
                 'expediteur': message.id_expediteur.nom_utilisateur,
                 'horodatage': message.horodatage.strftime("%Y-%m-%d %H:%M:%S"),
                 'is_mine': True
-            }
+            },
+            'other_user_id': other_user.id,
+            'last_message': message_content
         })
-
-    return JsonResponse({'error': 'Invalid request'}, status=400)
-
 
 @login_required
 def get_new_messages(request, conversation_id, last_message_time):
@@ -173,6 +190,9 @@ def get_new_messages(request, conversation_id, last_message_time):
         horodatage__gt=last_time
     ).order_by('horodatage')
 
+    # Trouver l'autre participant de la conversation
+    other_user = conversation.id_participant2 if conversation.id_participant1 == request.user else conversation.id_participant1
+
     return JsonResponse({
         'messages': [{
             'contenu': msg.contenu,
@@ -181,7 +201,43 @@ def get_new_messages(request, conversation_id, last_message_time):
             'is_mine': msg.id_expediteur == request.user,
             'avatar_url': msg.id_expediteur.profil.url_avatar if hasattr(msg.id_expediteur,
                                                                          'profil') and msg.id_expediteur.profil.url_avatar else None
-        } for msg in new_messages]
+        } for msg in new_messages],
+        'other_user_id': other_user.id,
+        'last_message': new_messages.last().contenu if new_messages.exists() else None
     })
+
+@login_required
+def get_all_last_messages(request):
+    latest_messages = []
+    most_recent_date = None
+    
+    # D'abord, trouvez toutes les conversations impliquant l'utilisateur actuel
+    conversations = Conversation.objects.filter(
+        Q(id_participant1=request.user) | Q(id_participant2=request.user)
+    )
+    
+    for conv in conversations:
+        # Déterminer l'autre utilisateur dans la conversation
+        other_user = conv.id_participant2 if conv.id_participant1 == request.user else conv.id_participant1
+        
+        # Obtenir le dernier message de cette conversation
+        last_message = Mess.objects.filter(id_conversation=conv).order_by('-horodatage').first()
+        
+        if last_message:
+            if not most_recent_date or last_message.horodatage > most_recent_date:
+                most_recent_date = last_message.horodatage
+                
+            latest_messages.append({
+                'user_id': other_user.id,
+                'content': last_message.contenu,
+                'timestamp': last_message.horodatage.isoformat(),
+            })
+    
+    # Trier les messages par horodatage et marquer le plus récent
+    sorted_messages = sorted(latest_messages, key=lambda x: x['timestamp'], reverse=True)
+    if sorted_messages:
+        sorted_messages[0]['is_most_recent'] = True
+    
+    return JsonResponse({'last_messages': sorted_messages})
 
 

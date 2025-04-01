@@ -6,31 +6,44 @@
 
 <link rel="stylesheet" href="{% static 'styles/user_list.css' %}">
 
-<div class="container">
-    <h2 class="section-title">Messages</h2>
+<div class="app-wrapper">
+    {% include 'layout/sidebar.html' %}
+    <main class="main-content">
+        <div class="main-element">
+            <header class="header">
+                <div class="feed-selector">
+                    Messages
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+            </header>
 
-    <div class="user-list">
-        {% for user in users %}
-        <div class="user-card">
-            <div class="user-info">
-                <div class="user-initial" style="background-color: {% if user.nom_utilisateur|first == 'T' %}#0084ff{% else %}#6c757d{% endif %}">
-                    {{ user.nom_utilisateur|first }}
+            <div class="user-list" id="user-list">
+                {% for user in users %}
+                <div class="user-card" data-user-id="{{ user.id }}">
+                    <div class="user-info">
+                        <div class="user-initial" style="background-color: {% if user.nom_utilisateur|first == 'T' %}#0084ff{% else %}#6c757d{% endif %}">
+                            {{ user.nom_utilisateur|first }}
+                        </div>
+                        <div class="user-details">
+                            <span class="username">{{ user.nom_utilisateur }}</span>
+                            <div class="message-preview">
+                                {% if user.last_message_is_mine %}
+                                <span class="message-sender">Vous: </span>
+                                {% endif %}
+                                <span class="last-message {% if not user.message_read %}unread{% endif %}">
+                                    {{ user.last_message|default:"Pas de message" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-message" data-user-id="{{ user.id }}" data-username="{{ user.nom_utilisateur }}">
+                        <i class="fa-regular fa-message"></i>
+                    </button>
                 </div>
-                <div class="user-details">
-                    <span class="username">{{ user.nom_utilisateur }}</span>
-                    <span class="last-message">{{ user.last_message|default:"Pas de message" }}</span>
-                </div>
+                {% endfor %}
             </div>
-            <button class="btn-message"
-                    data-user-id="{{ user.id }}"
-                    data-username="{{ user.nom_utilisateur }}">
-                <svg viewBox="0 0 24 24" width="20" height="20">
-                    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.96 9.96 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="currentColor"/>
-                </svg>
-            </button>
         </div>
-        {% endfor %}
-    </div>
+    </main>
 </div>
 
 <div id="chat-dialog" class="chat-dialog">
@@ -209,21 +222,34 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     async function loadConversation(userId) {
-        const response = await fetch(`/utilisateurs/conversations/${userId}/`);
-        if (!response.ok) throw new Error('Network response was not ok');
+    const response = await fetch(`/utilisateurs/conversations/${userId}/`);
+    if (!response.ok) throw new Error('Network response was not ok');
 
-        const data = await response.json();
-        currentConversationId = data.conversation_id;
+    const data = await response.json();
+    currentConversationId = data.conversation_id;
 
+    // Réinitialiser l'état
+    displayedMessages.clear();
+    messagesContainer.innerHTML = '';
+
+    // Afficher les messages existants s'il y en a
+    if (data.messages && data.messages.length > 0) {
         data.messages.forEach(message => {
             displayMessage(message);
         });
-
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-        if (pollingInterval) clearInterval(pollingInterval);
-        pollingInterval = setInterval(checkNewMessages, 3000);
+        // Mettre à jour lastMessageTime avec le dernier message
+        lastMessageTime = data.messages[data.messages.length - 1].horodatage;
+    } else {
+        // Si pas de messages, initialiser avec la date actuelle
+        lastMessageTime = new Date().toISOString();
     }
+
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Réinitialiser le polling
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = setInterval(checkNewMessages, 3000);
+}
 
     async function checkNewMessages() {
         if (!currentConversationId || !lastMessageTime) return;
@@ -239,6 +265,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayMessage(message);
                     displayedMessages.add(messageKey);
                     lastMessageTime = message.horodatage;
+
+                    // Mettre à jour le dernier message dans la liste des utilisateurs
+                    if (data.other_user_id && data.last_message) {
+                        const userCard = document.querySelector(`.user-card[data-user-id="${data.other_user_id}"]`);
+                        if (userCard) {
+                            const lastMessageSpan = userCard.querySelector('.last-message');
+                            if (lastMessageSpan) {
+                                lastMessageSpan.textContent = data.last_message;
+                            }
+                            // Déplacer la carte en haut de la liste
+                            const userList = userCard.parentElement;
+                            userList.insertBefore(userCard, userList.firstChild);
+                        }
+                    }
+
                     if (!isMinimized) {
                         messagesContainer.scrollTop = messagesContainer.scrollHeight;
                     }
@@ -246,6 +287,16 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         } catch (error) {
             console.error('Error:', error);
+        }
+    }
+
+    async function updateLastMessage(userId, messageContent) {
+        const userCard = document.querySelector(`.user-card[data-user-id="${userId}"]`);
+        if (userCard) {
+            const lastMessageSpan = userCard.querySelector('.last-message');
+            if (lastMessageSpan) {
+                lastMessageSpan.textContent = messageContent;
+            }
         }
     }
 
@@ -276,6 +327,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 }
                 sendButton.style.opacity = '0.7';
+                
+                // Forcer le rafraîchissement des derniers messages
+                await refreshLastMessages();
             }
         } catch (error) {
             console.error('Error:', error);
@@ -338,6 +392,78 @@ document.addEventListener('DOMContentLoaded', function() {
     messageInput.addEventListener('input', function() {
         sendButton.style.opacity = this.value.trim() ? '1' : '0.7';
     });
+
+    // Ajouter une fonction pour mettre à jour périodiquement tous les derniers messages
+    function updateAllLastMessages() {
+        fetch('/utilisateurs/get_all_last_messages/')
+            .then(response => response.json())
+            .then(data => {
+                data.last_messages.forEach(msg => {
+                    const userCard = document.querySelector(`.user-card[data-user-id="${msg.user_id}"]`);
+                    if (userCard) {
+                        const lastMessageSpan = userCard.querySelector('.last-message');
+                        if (lastMessageSpan) {
+                            lastMessageSpan.textContent = msg.content;
+                            
+                            // Déplacer la carte au début si c'est le message le plus récent
+                            if (msg.is_most_recent) {
+                                const userList = userCard.parentElement;
+                                userList.insertBefore(userCard, userList.firstChild);
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Mettre à jour les derniers messages toutes les 3 secondes
+    setInterval(updateAllLastMessages, 3000);
+
+    // Ajouter cette fonction pour mettre à jour la liste des messages
+    async function refreshLastMessages() {
+        try {
+            const response = await fetch('/utilisateurs/get_all_last_messages/');
+            const data = await response.json();
+            
+            data.last_messages.forEach(msg => {
+                const messagePreview = document.querySelector(`.user-card[data-user-id="${msg.user_id}"] .message-preview`);
+                if (messagePreview) {
+                    // Vider le contenu existant
+                    messagePreview.innerHTML = '';
+                    
+                    // Ajouter "Vous : " si c'est votre message
+                    if (msg.is_mine) {
+                        const senderSpan = document.createElement('span');
+                        senderSpan.className = 'message-sender';
+                        senderSpan.textContent = 'Vous : ';
+                        messagePreview.appendChild(senderSpan);
+                    }
+                    
+                    // Ajouter le message
+                    const messageSpan = document.createElement('span');
+                    messageSpan.className = 'last-message';
+                    if (!msg.is_mine && !msg.is_read) {
+                        messageSpan.classList.add('unread');
+                    }
+                    messageSpan.textContent = msg.content;
+                    messagePreview.appendChild(messageSpan);
+                    
+                    // Déplacer la carte si c'est le message le plus récent
+                    if (msg.is_most_recent) {
+                        const userCard = messagePreview.closest('.user-card');
+                        const userList = document.getElementById('user-list');
+                        userList.insertBefore(userCard, userList.firstChild);
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error refreshing messages:', error);
+        }
+    }
+
+    // Mettre à jour les messages toutes les 3 secondes
+    setInterval(refreshLastMessages, 3000);
 });
 </script>
 {% endblock %}
