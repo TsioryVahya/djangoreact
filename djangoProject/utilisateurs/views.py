@@ -3,7 +3,7 @@ from django.db.models.functions import Coalesce  # Ajout de cet import
 
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
@@ -265,5 +265,10 @@ def get_all_last_messages(request):
         sorted_messages[0]['is_most_recent'] = True
     
     return JsonResponse({'last_messages': sorted_messages})
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, 'Vous avez été déconnecté avec succès.')
+    return redirect('login')  # Redirige vers la page de connexion après déconnexion
 
 

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'styles/home.css' %}">
+<link rel="stylesheet" href="{% static 'styles/search.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="app-wrapper">
+    {% include 'layout/sidebar.html' %}
+    <main class="main-content">
+        <div class="main-element">
+            <header class="header">
+                <div class="search-header">
+                    <h1>Recherche</h1>
+                    <div class="search-form">
+                        <div class="search-input-container">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="searchInput" placeholder="Rechercher des problèmes..." class="search-input" autofocus>
+                            <button type="button" id="clearSearchBtn" class="clear-search-btn" style="display: none;">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="feed-container" id="posts-container">
+                <!-- Les publications filtrées seront ajoutées dynamiquement ici par JavaScript -->
+            </div>
+
+            <div id="loadingSpinner" class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Use the dedicated search script -->
+<script src="{% static 'scripts/search.js' %}"></script>
+{% endblock %}

@@ -1,6 +1,9 @@
+{% load static %}
 <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-        <span class="logo-text">a</span>
+        <span class="logo-text">
+            <img src="{% static 'images/logo_blanc.png' %}" alt="Logo" />
+        </span>
     </div>
     <div class="sidebar-items">
         <a href="{% url 'accueil' %}" class="sidebar-item {% if request.resolver_match.url_name == 'accueil' %}active{% endif %}"><i class="fa-solid fa-house"></i></a>
@@ -8,5 +11,6 @@
         <a href="{% url 'user_list' %}" class="sidebar-item"><i class="fa-solid fa-message"></i></a>
         <a href="#" class="sidebar-item"><i class="fa-solid fa-heart"></i></a>
         <a href="{% url 'profile' %}" class="sidebar-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"><i class="fa-solid fa-user"></i></a>
+        <a href="{% url 'logout' %}" class="sidebar-item"><i class="fa-solid fa-sign-out-alt"></i></a>
     </div>
 </nav>

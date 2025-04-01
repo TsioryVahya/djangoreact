@@ -1,11 +1,11 @@
 // Variables
-$sidebar-color: teal;
-$sidebar-width: 70px;
+$sidebar-color: #2E7D32;
+$sidebar-width: 100px;
 $border-radius: 8px;
 $spacing-xs: 4px;
 $spacing-sm: 8px;
 $spacing-md: 16px;
-$spacing-lg: 24px;
+$spacing-lg: 40px;
 
 // Mixins 
 @mixin flex($direction: row, $justify: flex-start, $align: flex-start) {
@@ -57,6 +57,12 @@ $spacing-lg: 24px;
     padding: $spacing-md 0 $spacing-lg;
     .logo-text {
       @include logo-style;
+
+      img {
+        width: 124px; // Match the size of icons
+        height:124px;
+        object-fit: contain;
+      }
     }
   }
 

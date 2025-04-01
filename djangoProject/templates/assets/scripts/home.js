@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     submitBtn.addEventListener('click', async () => {
         try {
-            const response = await fetch('/api/problemes/', {
+            const response = await fetch('/api/problemes/', {  // Updated URL to match your API endpoint
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -256,6 +256,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     est_anonyme: anonymousCheck.checked
                 })
             });
+
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error("La réponse du serveur n'est pas au format JSON");
+            }
 
             if (response.ok) {
                 const newPost = await response.json();
@@ -279,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 postsManager.container.insertBefore(postElement, postsManager.container.firstChild);
                 closeModal();
                 
-                // Optionnel : Afficher un message de succès
+                // Afficher un message de succès
                 alert('Problème publié avec succès !');
             } else {
                 const errorData = await response.json();
