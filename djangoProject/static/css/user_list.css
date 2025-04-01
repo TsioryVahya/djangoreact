@@ -1,1 +1,147 @@
 /* Déplacez tout le contenu du fichier CSS existant ici */
+
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+    background-color: #fff;
+}
+
+.main-content {
+    flex-grow: 1;
+    margin-left: 80px;
+    border-left: 1px solid #e4e6eb;
+    border-right: 1px solid #e4e6eb;
+    padding: 20px;
+    min-height: 100vh;
+    background-color: white;
+}
+
+.main-element {
+    max-width: 600px;
+    margin: 0 auto;
+    border-right: 1px solid #e4e6eb;
+    min-height: 100vh;
+}
+
+.header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e4e6eb;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 100;
+}
+
+.feed-selector {
+    font-size: 20px;
+    font-weight: 700;
+    color: #050505;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.user-list {
+    padding: 8px 0;
+}
+
+.user-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.user-card:hover {
+    background-color: #f0f2f5;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-initial {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 18px;
+    text-transform: uppercase;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.username {
+    font-size: 15px;
+    font-weight: 600;
+    color: #050505;
+}
+
+.last-message {
+    font-size: 13px;
+    color: #65676b;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: normal;
+}
+
+.last-message.unread {
+    color: #050505;
+    font-weight: 600;
+}
+
+.btn-message {
+    background: transparent;
+    border: none;
+    color: #0084ff;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-message:hover {
+    background-color: #f0f2f5;
+}
+
+.btn-message i {
+    font-size: 18px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.message-preview {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #65676b;
+    font-size: 13px;
+}
+
+.message-sender {
+    color: #65676b;
+    font-weight: normal;
+}

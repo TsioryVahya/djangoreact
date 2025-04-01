@@ -15,4 +15,5 @@ urlpatterns = [
          views.get_new_messages,
          name='get_new_messages'),
     path('toggle-reaction/', toggle_reaction, name='toggle_reaction'),
+    path('get_all_last_messages/', views.get_all_last_messages, name='get_all_last_messages'),
 ]
